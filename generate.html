@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Decoupled Architect</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        pre {
+            background: #0f172a;
+            color: #94a3b8;
+            padding: 24px;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            border: 1px solid #1e293b;
+            line-height: 1.6;
+            height: 100%;
+        }
+
+        .config-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        }
+
+        .matrix-input {
+            font-size: 11px;
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            width: 100%;
+            background: #f8fafc;
+        }
+
+        .file-tab {
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 8px 8px 0 0;
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .file-tab.active {
+            background: #0f172a;
+            color: white;
+            border-color: #0f172a;
+        }
+
+        label {
+            font-size: 10px;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen pb-20">
+
+    <div class="max-w-[1700px] mx-auto px-6 pt-10">
+        <header class="flex justify-between items-center mb-10 border-b pb-6 text-slate-900 uppercase italic">
+            <div>
+                <h1 class="text-3xl font-black tracking-tighter">PIPELINE <span
+                        class="text-blue-600 font-black">GENERATOR</span></h1>
+                <p class="text-slate-500 font-medium lowercase">Automated Workflows for Next.js, Laravel, Shopify, and
+                    more.</p>
+            </div>
+            <button onclick="generateAll()"
+                class="bg-blue-600 text-white px-10 py-4 rounded-2xl font-black hover:bg-blue-700 shadow-xl transition active:scale-95">
+                Generate Full Bundle
+            </button>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            <!-- LEFT CONFIG -->
+            <div class="lg:col-span-5 space-y-6 max-h-[85vh] overflow-y-auto pr-2">
+
+                <!-- 1. PROJECT TYPE & TOOLING -->
+                <div class="config-card border-l-4 border-l-blue-600">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">1. Project & Stack</h3>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label>Project Type</label>
+                            <select id="projectType" onchange="handleProjectChange()"
+                                class="w-full p-3 bg-slate-50 border rounded-xl text-sm font-bold">
+                                <option value="nextjs">Next.js</option>
+                                <option value="react">React / Vite</option>
+                                <option value="nodejs">Node.js (Express)</option>
+                                <option value="nestjs">NestJS</option>
+                                <option value="laravel">Laravel (PHP)</option>
+                                <option value="wordpress">WordPress</option>
+                                <option value="shopify">Shopify Theme</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Package Manager</label>
+                            <select id="packageManager"
+                                class="w-full p-3 bg-slate-50 border rounded-xl text-sm font-bold">
+                                <option value="npm">npm</option>
+                                <option value="yarn">yarn</option>
+                                <option value="pnpm">pnpm</option>
+                                <option value="composer" id="composerOption" class="hidden">composer</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label>Deployment Platform</label>
+                            <select id="deployTarget" onchange="toggleVpsOptions()"
+                                class="w-full p-3 bg-slate-50 border rounded-xl text-sm font-bold">
+                                <option value="vps">VPS (SSH + PM2)</option>
+                                <option value="vercel">Vercel</option>
+                                <option value="digitalocean">DigitalOcean App</option>
+                                <option value="render">Render</option>
+                            </select>
+                        </div>
+                        <div id="buildDirWrapper">
+                            <label>Build Directory</label>
+                            <input type="text" id="artifactPath" value=".next"
+                                class="w-full p-3 border rounded-xl text-xs font-mono">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. VPS & RUNTIME (Conditional) -->
+                <div id="vpsSettings" class="config-card border-l-4 border-l-orange-500">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">2. VPS & Process
+                        Manager</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div id="pm2Wrapper">
+                            <label>PM2 App Name</label>
+                            <input type="text" id="pm2Name" value="my-app"
+                                class="w-full p-3 border rounded-xl text-sm font-bold">
+                        </div>
+                        <div id="runtimeWrapper">
+                            <label>Runtime Version</label>
+                            <input type="text" id="stackVersion" value="20"
+                                class="w-full p-3 border rounded-xl text-sm font-bold" placeholder="e.g. 20 or 8.2">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. QUALITY GATES -->
+                <div class="config-card border-l-4 border-l-green-500">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">3. CI Steps</h3>
+                    <div class="grid grid-cols-3 gap-y-3" id="ciStepCheckboxes">
+                        <label class="flex items-center gap-2 text-[10px] font-bold"><input type="checkbox"
+                                id="checkLint" checked> Lint</label>
+                        <label class="flex items-center gap-2 text-[10px] font-bold"><input type="checkbox"
+                                id="checkType" checked> Typecheck</label>
+                        <label class="flex items-center gap-2 text-[10px] font-bold"><input type="checkbox"
+                                id="checkTest" checked> Test</label>
+                        <label class="flex items-center gap-2 text-[10px] font-bold"><input type="checkbox"
+                                id="checkLighthouse"> Lighthouse</label>
+                        <label class="flex items-center gap-2 text-[10px] font-bold"><input type="checkbox"
+                                id="checkPlaywright"> Playwright</label>
+                    </div>
+                </div>
+
+                <!-- 4. MATRIX -->
+                <div class="config-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest">4. Branch & Secrets
+                            Mapping</h3>
+                        <button onclick="addBranch()"
+                            class="text-[10px] bg-slate-900 text-white px-2 py-1 rounded font-bold">+ Branch</button>
+                    </div>
+                    <div id="branchChips" class="flex flex-wrap gap-2 mb-4"></div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead id="matrixHeader" class="text-[10px] text-slate-400 uppercase border-b pb-2"></thead>
+                            <tbody id="matrixBody"></tbody>
+                        </table>
+                    </div>
+                    <button onclick="addEnvRow()"
+                        class="mt-6 text-[10px] text-blue-600 font-bold border-b border-blue-600 uppercase italic">+ Add
+                        Env Variable Mapping</button>
+                </div>
+            </div>
+
+            <!-- RIGHT PREVIEW -->
+            <div class="lg:col-span-7 flex flex-col h-full">
+                <div id="outputArea" class="hidden flex-grow flex flex-col">
+                    <div class="flex bg-slate-200 p-2 rounded-t-xl gap-1 overflow-x-auto" id="fileTabs"></div>
+                    <div class="relative flex-grow">
+                        <pre id="codeBox" class="rounded-b-xl rounded-tr-xl"></pre>
+                        <div class="absolute top-4 right-4 flex gap-2">
+                            <button onclick="copyCurrentFile()"
+                                class="bg-slate-800 text-white px-4 py-2 rounded-lg text-xs font-bold">Copy</button>
+                            <button onclick="downloadCurrentFile()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold">Download</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="placeholder"
+                    class="h-full border-4 border-dashed border-slate-200 rounded-[40px] flex flex-col items-center justify-center text-slate-300">
+                    <p class="font-bold italic uppercase tracking-widest">Select stack and generate bundle</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let branches = ['dev', 'staging', 'main'];
+        let envRows = [];
+        let generatedFiles = {};
+        let activeFile = '';
+
+        const stackDefaults = {
+            nextjs: { pm: 'npm', dir: '.next', ver: '20' },
+            react: { pm: 'npm', dir: 'dist', ver: '20' },
+            nodejs: { pm: 'npm', dir: '.', ver: '20' },
+            nestjs: { pm: 'npm', dir: 'dist', ver: '20' },
+            laravel: { pm: 'composer', dir: 'public', ver: '8.2' },
+            wordpress: { pm: 'composer', dir: '.', ver: '8.1' },
+            shopify: { pm: 'npm', dir: '.', ver: '20' }
+        };
+
+        const secretMap = {
+            vps: ['SSH_HOST', 'SSH_USER', 'SSH_KEY', 'DEPLOY_PATH'],
+            vercel: ['VERCEL_TOKEN', 'VERCEL_ORG_ID', 'VERCEL_PROJECT_ID'],
+            digitalocean: ['DO_TOKEN', 'DO_APP_ID'],
+            render: ['RENDER_DEPLOY_HOOK'],
+            shopify: ['SHOPIFY_CLI_KEY', 'SHOPIFY_STORE_URL']
+        };
+
+        function handleProjectChange() {
+            const type = document.getElementById('projectType').value;
+            const config = stackDefaults[type];
+
+            document.getElementById('artifactPath').value = config.dir;
+            document.getElementById('stackVersion').value = config.ver;
+            document.getElementById('packageManager').value = config.pm;
+
+            document.getElementById('composerOption').classList.toggle('hidden', type !== 'laravel' && type !== 'wordpress');
+            document.getElementById('pm2Wrapper').classList.toggle('hidden', type === 'laravel' || type === 'wordpress' || type === 'shopify');
+
+            renderMatrix();
+        }
+
+        function toggleVpsOptions() {
+            const target = document.getElementById('deployTarget').value;
+            document.getElementById('vpsSettings').classList.toggle('hidden', target !== 'vps');
+            renderMatrix();
+        }
+
+        function addBranch() {
+            const b = prompt("Branch name:");
+            if (b) { branches.push(b.toLowerCase()); renderMatrix(); }
+        }
+
+        function addEnvRow() {
+            envRows.push({ id: Date.now() });
+            renderMatrix();
+        }
+
+        function renderMatrix() {
+            const target = document.getElementById('deployTarget').value;
+            const head = document.getElementById('matrixHeader');
+            const body = document.getElementById('matrixBody');
+            document.getElementById('branchChips').innerHTML = branches.map(b => `<span class="bg-slate-200 px-3 py-1 rounded-full text-[10px] font-bold uppercase">${b} <button onclick="branches=branches.filter(x=>x!=='${b}');renderMatrix()" class="ml-1 text-slate-400 hover:text-red-500">×</button></span>`).join('');
+
+            const secrets = secretMap[target] || [];
+            head.innerHTML = `<tr><th class="py-2">Secret Key</th>` + branches.map(b => `<th class="text-center font-bold">${b}</th>`).join('') + `</tr>`;
+
+            body.innerHTML = secrets.map(s => `
+                <tr class="border-b border-slate-50">
+                    <td class="py-2 font-bold text-[10px] text-slate-500">${s}</td>
+                    ${branches.map(b => `<td class="p-1"><input type="text" placeholder="GH Secret" class="matrix-input secret-val" data-key="${s}" data-branch="${b}"></td>`).join('')}
+                </tr>
+            `).join('') + envRows.map(row => `
+                <tr class="border-b border-slate-50">
+                    <td class="py-2"><input type="text" placeholder="API_KEY" class="matrix-input font-bold env-key" data-id="${row.id}"></td>
+                    ${branches.map(b => `<td class="p-1"><input type="text" placeholder="Secret" class="matrix-input env-val" data-id="${row.id}" data-branch="${b}"></td>`).join('')}
+                </tr>
+            `).join('');
+        }
+
+        function generateAll() {
+            const type = document.getElementById('projectType').value;
+            const pm = document.getElementById('packageManager').value;
+            const target = document.getElementById('deployTarget').value;
+            const pm2Name = document.getElementById('pm2Name').value;
+            const artPath = document.getElementById('artifactPath').value;
+            const version = document.getElementById('stackVersion').value;
+
+            generatedFiles = {};
+
+            branches.forEach(b => {
+                generatedFiles[`${b}.yml`] = buildWorkflow(b, type, pm, target, pm2Name, artPath, version);
+            });
+
+            let envContent = "# Generated Environment Variables\n";
+            document.querySelectorAll('.env-key').forEach(input => {
+                if (input.value.trim()) envContent += `${input.value.trim().toUpperCase()}=\n`;
+            });
+            generatedFiles['.env.example'] = envContent;
+
+            generatedFiles['README.md'] = `# Deployment Guide (${type.toUpperCase()})\n\n### Platform: ${target.toUpperCase()}\n\n### Secrets\n${(secretMap[target] || []).map(s => `- \`${s}\``).join('\n')}\n\n### CI Steps\nWorkflows are decoupled per branch.`;
+
+            renderTabs();
+            document.getElementById('outputArea').classList.remove('hidden');
+            document.getElementById('placeholder').classList.add('hidden');
+        }
+
+        function buildWorkflow(branch, type, pm, target, pm2Name, artPath, version) {
+            const isPHP = type === 'laravel' || type === 'wordpress';
+            const isShopify = type === 'shopify';
+            const install = pm === 'npm' ? 'npm ci' : pm + ' install';
+
+            let y = `name: Deploy ${branch.toUpperCase()}\n\non:\n  push:\n    branches: [${branch}]\n\njobs:\n  build-and-deploy:\n    runs-on: ubuntu-latest\n    environment: ${branch}\n    steps:\n      - uses: actions/checkout@v4\n`;
+
+            if (isPHP) {
+                y += `      - uses: shivammathur/setup-php@v2\n        with: { php-version: '${version}', extensions: mbstring, bcmath, curl, mysql }\n`;
+            } else if (isShopify) {
+                y += `      - uses: actions/setup-node@v4\n        with: { node-version: '${version}' }\n      - name: Install Shopify CLI\n        run: npm install -g @shopify/cli @shopify/theme\n`;
+            } else {
+                if (pm === 'pnpm') y += `      - uses: pnpm/action-setup@v2\n        with: { version: 8 }\n`;
+                y += `      - uses: actions/setup-node@v4\n        with: { node-version: '${version}', cache: '${pm}' }\n`;
+            }
+
+            // Quality Gates
+            y += `      - name: Install Dependencies\n        run: ${install}\n`;
+            if (!isShopify) {
+                if (document.getElementById('checkLint').checked) y += `      - name: Lint\n        run: ${pm === 'composer' ? 'vendor/bin/phpcs' : pm + ' run lint'}\n`;
+                if (document.getElementById('checkType').checked && !isPHP) y += `      - name: Typecheck\n        run: npx tsc --noEmit\n`;
+                if (document.getElementById('checkTest').checked) y += `      - name: Test\n        run: ${pm === 'composer' ? 'php artisan test' : pm + ' test'}\n`;
+            }
+
+            // Deployments
+            if (isShopify) {
+                y += `      - name: Shopify Theme Push\n        run: shopify theme push --store \${{ secrets.${getVal('SHOPIFY_STORE_URL', branch)} }} --theme \${{ github.ref_name }}\n`;
+            } else if (target === 'vps') {
+                const path = getVal('DEPLOY_PATH', branch);
+                y += `      - name: Build\n        run: ${pm === 'composer' ? 'php artisan optimize' : pm + ' run build'}\n`;
+                y += `      - name: Package & Transfer\n        run: tar -czf release.tar.gz ${artPath} package.json\n`;
+                y += `      - name: SCP to Server\n        uses: appleboy/scp-action@master\n        with:\n          host: \${{ secrets.${getVal('SSH_HOST', branch)} }}\n          key: \${{ secrets.${getVal('SSH_KEY', branch)} }}\n          source: "release.tar.gz"\n          target: "${path}"\n`;
+                y += `      - name: Extract & Restart\n        uses: appleboy/ssh-action@master\n        with:\n          host: \${{ secrets.${getVal('SSH_HOST', branch)} }}\n          key: \${{ secrets.${getVal('SSH_KEY', branch)} }}\n          script: |\n            cd ${path}\n            tar -xzf release.tar.gz\n            rm release.tar.gz\n            ${isPHP ? 'php artisan migrate --force' : `pm2 restart ${pm2Name}-${branch} || pm2 start npm --name "${pm2Name}-${branch}" -- start`}\n`;
+            } else if (target === 'vercel') {
+                y += `      - name: Vercel Deploy\n        run: npx vercel --token \${{ secrets.${getVal('VERCEL_TOKEN', branch)} }} ${branch === 'main' ? '--prod' : ''}\n`;
+            } else if (target === 'digitalocean') {
+                y += `      - name: DO Deploy\n        run: | \n          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer \${{ secrets.${getVal('DO_TOKEN', branch)} }}" "https://api.digitalocean.com/v2/apps/\${{ secrets.${getVal('DO_APP_ID', branch)} }}/deployments"\n`;
+            }
+            return y;
+        }
+
+        function renderTabs() {
+            const tabs = document.getElementById('fileTabs');
+            tabs.innerHTML = Object.keys(generatedFiles).map(f => `<div class="file-tab ${activeFile === f ? 'active' : ''}" onclick="switchTab('${f}')">${f}</div>`).join('');
+            if (!activeFile || !generatedFiles[activeFile]) switchTab(Object.keys(generatedFiles)[0]);
+            else switchTab(activeFile);
+        }
+
+        function switchTab(f) {
+            activeFile = f;
+            document.querySelectorAll('.file-tab').forEach(t => t.classList.toggle('active', t.innerText === f));
+            document.getElementById('codeBox').textContent = generatedFiles[f];
+        }
+
+        function getVal(key, b) {
+            const el = document.querySelector(`[data-key="${key}"][data-branch="${b}"]`);
+            return (el && el.value) ? el.value : `MISSING_${key}`;
+        }
+
+        function copyCurrentFile() { navigator.clipboard.writeText(generatedFiles[activeFile]); alert("Copied!"); }
+
+        function downloadCurrentFile() {
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(generatedFiles[activeFile]));
+            element.setAttribute('download', activeFile);
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        }
+
+        handleProjectChange();
+    </script>
+</body>
+
+</html>
